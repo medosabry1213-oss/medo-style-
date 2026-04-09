@@ -3,49 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medo Style Pro - نظام الحجز المتكامل</title>
+    <title>Medo Style Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         :root { --bg: #000; --card: #121212; --primary: #ff6d00; --text: #fff; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        
-        /* الهيدر السري للمدير */
-        #admin-trigger { color: var(--primary); font-size: 2.5rem; cursor: pointer; user-select: none; margin: 20px 0; font-weight: bold; text-shadow: 0 0 10px rgba(255,109,0,0.3); }
-        
-        /* جدول المواعيد */
+        #admin-trigger { color: var(--primary); font-size: 2.5rem; cursor: pointer; user-select: none; margin: 20px 0; font-weight: bold; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 15px; }
-        .day { background: var(--card); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #222; font-size: 0.85rem; transition: 0.3s; }
-        .day.active { border: 2px solid var(--primary); background: #1a1a1a; box-shadow: 0 0 15px rgba(255,109,0,0.2); }
-        .day b { color: var(--primary); display: block; margin-bottom: 4px; font-size: 1rem; }
-
-        /* شريط الحالة */
-        .status-bar { padding: 10px 25px; border-radius: 25px; margin-bottom: 20px; font-weight: bold; font-size: 1rem; transition: 0.5s; }
+        .day { background: var(--card); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #222; font-size: 0.85rem; }
+        .day.active { border: 2px solid var(--primary); background: #1a1a1a; }
+        .day b { color: var(--primary); display: block; margin-bottom: 4px; }
+        .status-bar { padding: 10px 25px; border-radius: 25px; margin-bottom: 20px; font-weight: bold; font-size: 1rem; }
         .open { background: #1b5e20; color: #4caf50; border: 1px solid #4caf50; }
         .closed { background: #b71c1c; color: #ff5252; border: 1px solid #ff5252; }
-        
-        /* كارت الحجز */
-        .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; }
         input, select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; }
-        input:focus { border-color: var(--primary); }
-        .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .btn:active { transform: scale(0.98); }
+        .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        
+        /* استايل زراير الاتصال والواتساب */
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-call { background: #0288d1; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        .btn-wa { background: #25d366; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
 
-        /* لوحة تحكم المدير */
         #admin-panel { display: none; background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 2px dashed var(--primary); box-sizing: border-box; }
         .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #222; padding: 8px; border-radius: 8px; }
-        .admin-row input { width: 60px; margin: 0 5px; padding: 5px; font-size: 0.9rem; }
-
-        /* قائمة الانتظار */
+        .admin-row input { width: 60px; margin: 0 5px; padding: 5px; background: #333; color: white; border: none; }
         .list { width: 100%; max-width: 400px; margin-top: 25px; }
-        .list-header { text-align: center; color: #666; margin-bottom: 15px; font-size: 1.1rem; letter-spacing: 1px; }
-        .row { background: #0f0f0f; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 5px solid var(--primary); animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+        .row { background: #0f0f0f; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 5px solid var(--primary); }
         .row-top { display: flex; justify-content: space-between; align-items: center; }
-        .admin-controls { display: none; margin-top: 12px; border-top: 1px solid #222; padding-top: 10px; gap: 10px; }
+        .admin-controls { display: none; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; gap: 10px; }
         .btn-s { flex: 1; padding: 12px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; }
-        .timer { color: #4caf50; font-family: 'Courier New', Courier, monospace; font-weight: bold; font-size: 1.2rem; }
+        .timer { color: #4caf50; font-family: monospace; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body>
@@ -55,30 +44,30 @@
     <div id="admin-panel">
         <h3 style="text-align:center; color:var(--primary); margin:0 0 15px 0;">⚙️ إعدادات المحل</h3>
         <div id="settings-list"></div>
-        <button class="btn" style="background:#2e7d32;" onclick="saveSched()">حفظ التعديلات 💾</button>
+        <button class="btn" style="background:#2e7d32;" onclick="saveSched()">حفظ المواعيد 💾</button>
         <button class="btn" style="background:#444; margin-top:8px;" onclick="toggleManual()">قفل / فتح يدوي 🔒</button>
     </div>
 
     <div class="grid" id="mainGrid"></div>
-
-    <div id="status-box" class="status-bar">جاري التحقق...</div>
+    <div id="status-box" class="status-bar">جاري التحميل...</div>
 
     <div class="booking-card" id="booking-ui">
-        <input type="text" id="n" placeholder="اسم الزبون الثنائي">
+        <input type="text" id="n" placeholder="اسمك الثنائي">
         <input type="tel" id="p" placeholder="رقم الموبايل">
         <select id="t"></select>
         <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
+        
+        <div class="contact-grid">
+            <a href="https://wa.me/201097281524" class="btn-wa">واتساب المحل</a>
+            <a href="tel:+201097281524" class="btn-call">اتصال هاتفي</a>
+        </div>
     </div>
 
-    <div class="list">
-        <div class="list-header">قائمة الحجز الحالية</div>
-        <div id="q"></div>
-    </div>
+    <div class="list" id="q"></div>
 
     <script>
-        // إعدادات تليجرام - ضع بياناتك هنا
         const TG_TOKEN = "8646413068:AAEyHPyZexE8hfSZu7pW7xXQG_BGTemnHPs"; 
-        const TG_ID = "ضع_هنا_رقم_الايدي"; // الرقم اللي جبته من userinfobot
+        const TG_ID = "7155097464"; 
 
         const conf = {
             apiKey: "AIzaSyAZTbw_9GzgcKcCO3wUdv4Rhy869I3G4XE",
@@ -93,30 +82,23 @@
         let isAdmin = false, currentSched = {}, manualClose = false, lastCount = 0;
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-        // دخول الإدارة (ضغطة 3 ثواني)
         let holdTimer;
         const trigger = document.getElementById('admin-trigger');
         ['mousedown', 'touchstart'].forEach(e => trigger.addEventListener(e, () => holdTimer = setTimeout(auth, 3000)));
-        ['mouseup', 'touchend', 'mouseleave'].forEach(e => trigger.addEventListener(e, () => clearTimeout(holdTimer)));
+        ['mouseup', 'touchend'].forEach(e => trigger.addEventListener(e, () => clearTimeout(holdTimer)));
 
         function auth() {
             if(prompt("كلمة سر المدير:") === "132901") { 
                 isAdmin = true; 
                 document.getElementById('admin-panel').style.display = 'block';
                 refreshAdminUI();
-                alert("مرحباً يا ميدو! تم تفعيل وضع المدير.");
             }
         }
 
-        // جلب الإعدادات من قاعدة البيانات
         db.ref('settings').on('value', snap => {
             const data = snap.val();
-            if(data) {
-                currentSched = data.sched;
-                manualClose = data.manualClose;
-                updateAppUI();
-            } else {
-                // إعدادات افتراضية عند أول تشغيل
+            if(data) { currentSched = data.sched; manualClose = data.manualClose; updateAppUI(); }
+            else {
                 const def = { 0:{o:14,c:25}, 1:{o:0,c:0}, 2:{o:13,c:25}, 3:{o:14,c:25}, 4:{o:17,c:25}, 5:{o:13,c:25}, 6:{o:17,c:25} };
                 db.ref('settings').set({ sched: def, manualClose: false });
             }
@@ -125,31 +107,20 @@
         function updateAppUI() {
             const now = new Date(), d = now.getDay(), hr = now.getHours();
             const today = currentSched[d];
-            
-            // تحديث الجدول المرئي
             const grid = document.getElementById('mainGrid'); grid.innerHTML = "";
             [5,6,0,1,2,3,4].forEach(i => {
                 const s = currentSched[i];
-                const activeClass = (i == d) ? 'active' : '';
-                grid.innerHTML += `<div class="day ${activeClass}"><b>${dayNames[i]}</b>${s.o==0?'إجازة':(s.o%12||12)+(s.o>=12?'م':'ص')+' : '+(s.c%12||12)+(s.c>=12?'م':'ص')}</div>`;
+                grid.innerHTML += `<div class="day ${i==d?'active':''}"><b>${dayNames[i]}</b>${s.o==0?'إجازة':(s.o%12||12)+(s.o>=12?'م':'ص')+' : '+(s.c%12||12)+(s.c>=12?'م':'ص')}</div>`;
             });
-
-            // حالة المحل
-            const isOpen = !manualClose && today.o !== 0 && hr >= today.o && hr < today.c;
+            const isOpen = !manualClose && today.o!==0 && hr>=today.o && hr<today.c;
             const box = document.getElementById('status-box');
             box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
-            box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
-            
-            // تعطيل الحجز لو مقفول
-            const bookingUI = document.getElementById('booking-ui');
-            bookingUI.style.opacity = isOpen ? "1" : "0.5";
-            bookingUI.style.pointerEvents = isOpen ? "all" : "none";
-
-            // تحديث قائمة المواعيد المتاحة
+            box.className = 'status-bar '+(isOpen?'open':'closed');
+            document.getElementById('booking-ui').style.opacity = isOpen ? "1" : "0.5";
+            document.getElementById('booking-ui').style.pointerEvents = isOpen ? "all" : "none";
             const sel = document.getElementById('t'); sel.innerHTML = "";
-            for(let i = Math.max(hr + 1, today.o); i < today.c; i++){
-                let h = i >= 24 ? i - 24 : i;
-                let t = (h % 12 || 12) + (h >= 12 ? ":00 PM" : ":00 AM");
+            for(let i=Math.max(hr+1, today.o); i<today.c; i++){
+                let h = i>=24?i-24:i; let t = (h%12||12)+(h>=12?":00 PM":":00 AM");
                 sel.innerHTML += `<option value="${t}">${t}</option>`;
             }
         }
@@ -157,77 +128,53 @@
         function refreshAdminUI() {
             const l = document.getElementById('settings-list'); l.innerHTML = "";
             for(let i=0; i<7; i++) {
-                l.innerHTML += `<div class="admin-row"><span>${dayNames[i]}</span><div>فتح: <input type="number" id="o-${i}" value="${currentSched[i].o}"> قفل: <input type="number" id="c-${i}" value="${currentSched[i].c}"></div></div>`;
+                l.innerHTML += `<div class="admin-row"><span>${dayNames[i]}</span><div>فت: <input type="number" id="o-${i}" value="${currentSched[i].o}"> قف: <input type="number" id="c-${i}" value="${currentSched[i].c}"></div></div>`;
             }
             document.querySelectorAll('.admin-controls').forEach(e => e.style.display = 'flex');
         }
 
         function saveSched() {
             let ns = {}; for(let i=0; i<7; i++) { ns[i] = { o: parseInt(document.getElementById(`o-${i}`).value), c: parseInt(document.getElementById(`c-${i}`).value) }; }
-            db.ref('settings/sched').set(ns); alert("تم حفظ المواعيد بنجاح!");
+            db.ref('settings/sched').set(ns); alert("تم الحفظ!");
         }
 
-        function toggleManual() { manualClose = !manualClose; db.ref('settings/manualClose').set(manualClose); alert(manualClose ? "المحل مغلق الآن" : "المحل مفتوح الآن"); }
+        function toggleManual() { manualClose = !manualClose; db.ref('settings/manualClose').set(manualClose); }
 
         function h() {
             const n = document.getElementById('n').value, p = document.getElementById('p').value, t = document.getElementById('t').value;
-            if(!n || !p) return alert("من فضلك اكتب اسمك ورقم موبايلك!");
+            if(!n || !p) return alert("اكمل البيانات");
             db.ref('b').push({ n: n, p: p, t: t, active: false, ts: 0, notified: false });
-            
-            // إرسال رسالة تليجرام للمدير
-            const msg = `💈 حجز جديد!\n👤 الزبون: ${n}\n📞 الموبايل: ${p}\n⏰ الموعد: ${t}`;
-            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent(msg)}`);
-
-            alert("تم حجز ميعادك بنجاح يا " + n + " ✅");
+            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
+            alert("تم الحجز بنجاح يا " + n + " ✅");
             document.getElementById('n').value = ""; document.getElementById('p').value = "";
         }
 
-        // مزامنة فورية لقائمة المنتظرين
         db.ref('b').on('value', snap => {
             const q = document.getElementById('q'); q.innerHTML = "";
             let count = snap.numChildren();
-            
-            // تنبيه للمدير عند وجود حجز جديد
             if(isAdmin && count > lastCount && lastCount !== 0) {
                 new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance("ميدو، حجز جديد وصل"));
+                window.speechSynthesis.speak(new SpeechSynthesisUtterance("حجز جديد"));
             }
             lastCount = count;
-
             snap.forEach(c => {
                 const d = c.val(), k = c.key;
-                q.innerHTML += `
-                    <div class="row">
-                        <div class="row-top">
-                            <div><b>${d.n}</b><br><small>${d.t}</small></div>
-                            <div class="timer" id="tm-${k}">${d.active ? '..' : 'منتظر'}</div>
-                        </div>
-                        <div class="admin-controls" style="display:${isAdmin?'flex':'none'}">
-                            <button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء الحلاقة ▶️</button>
-                            <button class="btn-s" style="background:#c62828;" onclick="del('${k}')">مسح الزبون 🗑️</button>
-                        </div>
-                    </div>`;
+                q.innerHTML += `<div class="row"><div class="row-top"><div><b>${d.n}</b><br><small>${d.t}</small></div><div class="timer" id="tm-${k}">${d.active?'..':'منتظر'}</div></div><div class="admin-controls" style="display:${isAdmin?'flex':'none'}"><button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء</button><button class="btn-s" style="background:#c62828;" onclick="del('${k}')">حذف</button></div></div>`;
             });
         });
 
         function run(id) { db.ref('b/'+id).update({ active: true, ts: Date.now() }); }
-        function del(id) { db.ref('b/'+id).remove(); } // الحذف بيسمع عند كل الناس فوراً
+        function del(id) { db.ref('b/'+id).remove(); }
 
-        // عداد الساعة والتنبيهات
         setInterval(() => {
             db.ref('b').once('value', snap => {
                 snap.forEach(c => {
                     const d = c.val();
                     if(d.active) {
                         const rem = 3600 - Math.floor((Date.now() - d.ts)/1000);
-                        if(rem <= 0) {
-                            del(c.key);
-                        } else {
-                            // تنبيه قبل 15 دقيقة (900 ثانية)
-                            if(rem === 900 && !d.notified) { 
-                                alert("تنبيه: متبقي 15 دقيقة فقط على ميعاد الزبون " + d.n);
-                                db.ref('b/'+c.key).update({notified: true});
-                            }
+                        if(rem <= 0) del(c.key);
+                        else {
+                            if(rem === 900 && !d.notified) { alert("باقي 15 دقيقة لـ " + d.n); db.ref('b/'+c.key).update({notified: true}); }
                             const el = document.getElementById('tm-'+c.key);
                             if(el) el.innerText = Math.floor(rem/60) + ":" + (rem%60).toString().padStart(2,'0');
                         }
