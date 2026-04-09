@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medo Style Pro - نظام الحجز الذكي</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg: #000; --card: #121212; --primary: #ff6d00; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        #admin-trigger { color: var(--primary); font-size: 2.2rem; cursor: pointer; user-select: none; margin: 15px 0; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 15px; }
+        .day { background: var(--card); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #222; font-size: 0.8rem; }
+        .day.active { border: 2px solid var(--primary); background: #1a1a1a; }
+        .day b { color: var(--primary); display: block; margin-bottom: 3px; }
+        .status-bar { padding: 8px 20px; border-radius: 20px; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; }
+        .open { background: #1b5e20; color: #4caf50; }
+        .closed { background: #b71c1c; color: #ff5252; }
+        .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; border: 1px solid #222; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; box-sizing: border-box; }
+        .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 5px; }
+        .btn-call { background: #0288d1; padding: 10px; border-radius: 8px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        .btn-wa { background: #25d366; padding: 10px; border-radius: 8px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        .list { width: 100%; max-width: 400px; margin-top: 20px; }
+        .list-header { text-align: center; color: #888; margin-bottom: 10px; font-size: 1rem; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .row { background: #0f0f0f; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-right: 4px solid var(--primary); }
+        .row-top { display: flex; justify-content: space-between; align-items: center; }
+        .admin-controls { display: none; margin-top: 10px; border-top: 1px solid #222; padding-top: 8px; gap: 8px; }
+        .btn-s { flex: 1; padding: 10px; border-radius: 6px; border: none; color: #fff; font-weight: bold; cursor: pointer; }
+        .btn-run { background: #2e7d32; }
+        .btn-del { background: #c62828; }
+        .timer { color: #4caf50; font-family: monospace; font-weight: bold; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <h1 id="admin-trigger">Medo Style</h1>
+    
+    <div class="grid">
+        <div class="day" id="d-5"><b>الجمعة</b>1م : 1ص</div>
+        <div class="day" id="d-6"><b>السبت</b>5م : 1ص</div>
+        <div class="day" id="d-0"><b>الأحد</b>2م : 1ص</div>
+        <div class="day" id="d-1"><b>الاثنين</b>إجازة</div>
+        <div class="day" id="d-2"><b>الثلاثاء</b>1م : 1ص</div>
+        <div class="day" id="d-3"><b>الأربعاء</b>2م : 1ص</div>
+        <div class="day" id="d-4" style="grid-column: span 2;"><b>الخميس</b>5م : 1ص</div>
+    </div>
+
+    <div id="status-box" class="status-bar"></div>
+
+    <div class="booking-card">
+        <input type="text" id="n" placeholder="اسمك الثنائي">
+        <input type="tel" id="p" placeholder="رقم الموبايل">
+        <select id="t"></select>
+        <button class="btn" onclick="h()">تأكيد الحجز ✅</button>
+        
+        <div class="contact-grid">
+            <a href="https://wa.me/201097281524" class="btn-wa">واتساب</a>
+            <a href="tel:+201097281524" class="btn-call">اتصال مباشر</a>
+        </div>
+    </div>
+
+    <div class="list">
+        <div class="list-header">قائمة المنتظرين الآن</div>
+        <div id="q"></div>
+    </div>
+
+    <script>
+        const conf = {
+            apiKey: "AIzaSyAZTbw_9GzgcKcCO3wUdv4Rhy869I3G4XE",
+            authDomain: "medostyle-21e06.firebaseapp.com",
+            databaseURL: "https://medostyle-21e06-default-rtdb.firebaseio.com",
+            projectId: "medostyle-21e06",
+            appId: "1:999137802961:web:826621189189a7eb3823f0"
+        };
+        firebase.initializeApp(conf);
+        const db = firebase.database();
+        let isAdmin = false;
+        const sched = { 0:{o:14,c:25}, 1:{o:0,c:0}, 2:{o:13,c:25}, 3:{o:14,c:25}, 4:{o:17,c:25}, 5:{o:13,c:25}, 6:{o:17,c:25} };
+
+        let holdTimer;
+        const trigger = document.getElementById('admin-trigger');
+        ['mousedown', 'touchstart'].forEach(e => trigger.addEventListener(e, () => holdTimer = setTimeout(auth, 3000)));
+        ['mouseup', 'touchend'].forEach(e => trigger.addEventListener(e, () => clearTimeout(holdTimer)));
+
+        function auth() {
+            if(prompt("كلمة سر المدير:") === "132901") { isAdmin = true; alert("أهلاً يا ماستر!"); refreshUI(); }
+        }
+
+        function refreshUI() { document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'flex'); }
+
+        function updateStatus() {
+            const now = new Date(); const d = now.getDay(); const hr = now.getHours();
+            const today = sched[d]; const box = document.getElementById('status-box');
+            document.querySelectorAll('.day').forEach(el => el.classList.remove('active'));
+            document.getElementById('d-'+d).classList.add('active');
+            const isOpen = today.o !== 0 && hr >= today.o && hr < today.c;
+            box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
+            box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
+            const select = document.getElementById('t'); select.innerHTML = "";
+            for(let i=Math.max(hr+1, today.o); i<today.c; i++) {
+                let h = i>=24?i-24:i; let txt = (h%12||12)+(h>=12?":00 PM":":00 AM");
+                select.innerHTML += `<option value="${txt}">${txt}</option>`;
+            }
+        }
+
+        function h() {
+            const name = document.getElementById('n').value; const phone = document.getElementById('p').value; const time = document.getElementById('t').value;
+            if(!name || !phone) return alert("اكمل البيانات");
+            db.ref('b').push({ n: name, p: phone, t: time, active: false, ts: 0, notified: false });
+            alert("تم الحجز بنجاح يا " + name + " ✅");
+            document.getElementById('n').value = ""; document.getElementById('p').value = "";
+        }
+
+        db.ref('b').on('value', snap => {
+            const q = document.getElementById('q'); q.innerHTML = "";
+            snap.forEach(c => {
+                const d = c.val(); const k = c.key;
+                q.innerHTML += `
+                    <div class="row">
+                        <div class="row-top">
+                            <div><b>${d.n}</b><br><small>${d.t}</small></div>
+                            <div class="timer" id="tm-${k}">${d.active ? ".." : "منتظر"}</div>
+                        </div>
+                        <div class="admin-controls" style="display:${isAdmin?'flex':'none'}">
+                            <button class="btn-s btn-run" onclick="run('${k}')">تشغيل</button>
+                            <button class="btn-s btn-del" onclick="del('${k}')">حذف</button>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        function run(id) { db.ref('b/'+id).update({ active: true, ts: Date.now() }); }
+        function del(id) { db.ref('b/'+id).remove(); }
+
+        setInterval(() => {
+            db.ref('b').once('value', snap => {
+                snap.forEach(c => {
+                    const d = c.val();
+                    if(d.active) {
+                        const elapsed = Math.floor((Date.now() - d.ts)/1000);
+                        const remaining = 3600 - elapsed;
+                        if(remaining <= 0) { del(c.key); }
+                        else {
+                            if(remaining === 900 && !d.notified) { 
+                                alert("تنبيه: متبقي 15 دقيقة على ميعاد الزبون " + d.n);
+                                db.ref('b/'+c.key).update({notified: true});
+                            }
+                            const m = Math.floor(remaining/60); const s = remaining%60;
+                            const el = document.getElementById('tm-'+c.key);
+                            if(el) el.innerText = m + ":" + (s < 10 ? '0'+s : s);
+                        }
+                    }
+                });
+            });
+        }, 1000);
+
+        updateStatus();
+    </script>
+</body>
+</html>
