@@ -21,7 +21,15 @@
         .closed { background: #b71c1c; color: #ff5252; border: 1px solid #ff5252; }
 
         .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; }
-        input, select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; }
+        input, select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; box-sizing: border-box; }
+        
+        /* استايل خاص لخانة الوقت */
+        input[type="time"] {
+            color-scheme: dark; /* بيخلي شكل الساعة في الموبايل دارك مود */
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+
         .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
         .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
@@ -60,12 +68,13 @@
     <div class="booking-card" id="booking-ui">
         <input type="text" id="n" placeholder="اسمك الثنائي">
         <input type="tel" id="p" placeholder="رقم الموبايل">
-        <select id="t"></select>
+        <label style="display:block; margin-bottom:5px; font-size:0.8rem; color:var(--primary)">اختر ميعاد الحجز:</label>
+        <input type="time" id="t_picker">
         <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
         
         <div class="contact-grid">
-            <a href="https://wa.me/201097281524" class="btn-wa">واتساب المحل</a>
-            <a href="tel:+201097281524" class="btn-call">اتصال هاتفي</a>
+            <a href="https://wa.me/201097281524" class="btn-wa">واتساب</a>
+            <a href="tel:+201097281524" class="btn-call">اتصال</a>
         </div>
     </div>
 
@@ -88,7 +97,6 @@
         let isAdmin = false, currentSched = {}, manualClose = false;
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-        // كود الدخول للمدير (3 ثواني)
         let holdTimer;
         const trigger = document.getElementById('admin-trigger');
         ['mousedown', 'touchstart'].forEach(e => trigger.addEventListener(e, () => {
@@ -97,7 +105,7 @@
                     isAdmin = true; 
                     document.getElementById('admin-panel').style.display = 'block';
                     refreshAdminUI();
-                    db.ref('b').get().then(s => updateList(s)); // تحديث القائمة فوراً لإظهار الأزرار
+                    db.ref('b').get().then(s => updateList(s));
                 }
             }, 3000);
         }));
@@ -132,13 +140,32 @@
             
             document.getElementById('booking-ui').style.opacity = isOpen ? "1" : "0.5";
             document.getElementById('booking-ui').style.pointerEvents = isOpen ? "all" : "none";
+        }
 
-            const sel = document.getElementById('t'); sel.innerHTML = "";
-            for(let i = Math.max(hr+1, opening); i < closing; i++){
-                let hVal = i >= 24 ? i - 24 : i;
-                let tTxt = (hVal % 12 || 12) + (hVal >= 12 ? ":00 PM" : ":00 AM");
-                sel.innerHTML += `<option value="${tTxt}">${tTxt}</option>`;
-            }
+        // تحويل وقت الـ Input إلى AM/PM
+        function formatTime(timeStr) {
+            if(!timeStr) return null;
+            let [h, m] = timeStr.split(':');
+            h = parseInt(h);
+            let suffix = h >= 12 ? "PM" : "AM";
+            h = h % 12 || 12;
+            return `${h}:${m} ${suffix}`;
+        }
+
+        function h() {
+            const n = document.getElementById('n').value, 
+                  p = document.getElementById('p').value, 
+                  rawTime = document.getElementById('t_picker').value;
+            
+            const t = formatTime(rawTime);
+
+            if(!n || !p || !t) return alert("اكمل البيانات وافتح خانة الوقت");
+            
+            db.ref('b').push({ n, p, t, active: false, ts: 0 });
+            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
+            alert("تم الحجز بنجاح ✅");
+            document.getElementById('n').value = ""; document.getElementById('p').value = "";
+            document.getElementById('t_picker').value = "";
         }
 
         function refreshAdminUI() {
@@ -151,15 +178,6 @@
         function saveSched() {
             let ns = {}; for(let i=0; i<7; i++) { ns[i] = { o: parseInt(document.getElementById(`o-${i}`).value), c: parseInt(document.getElementById(`c-${i}`).value) }; }
             db.ref('settings/sched').set(ns); alert("تم الحفظ!");
-        }
-
-        function h() {
-            const n = document.getElementById('n').value, p = document.getElementById('p').value, t = document.getElementById('t').value;
-            if(!n || !p) return alert("اكمل البيانات");
-            db.ref('b').push({ n, p, t, active: false, ts: 0 });
-            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
-            alert("تم الحجز بنجاح ✅");
-            document.getElementById('n').value = ""; document.getElementById('p').value = "";
         }
 
         db.ref('b').on('value', snap => updateList(snap));
