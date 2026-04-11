@@ -23,18 +23,13 @@
         .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; }
         input, select { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; box-sizing: border-box; }
         
-        /* استايل خاص لخانة الوقت */
-        input[type="time"] {
-            color-scheme: dark; /* بيخلي شكل الساعة في الموبايل دارك مود */
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
-        }
+        input[type="time"] { color-scheme: dark; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
 
         .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
         
         .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-call { background: #0288d1; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
-        .btn-wa { background: #25d366; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        .btn-call-main { background: #0288d1; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
+        .btn-wa-main { background: #25d366; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
 
         #admin-panel { display: none; background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 2px dashed var(--primary); box-sizing: border-box; }
         .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #222; padding: 8px; border-radius: 8px; }
@@ -43,8 +38,8 @@
         .list { width: 100%; max-width: 400px; margin-top: 25px; }
         .row { background: #0f0f0f; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 5px solid var(--primary); }
         .row-top { display: flex; justify-content: space-between; align-items: center; }
-        .admin-controls { display: flex; gap: 10px; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; }
-        .btn-s { flex: 1; padding: 10px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .admin-controls { display: flex; gap: 8px; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; flex-wrap: wrap; }
+        .btn-s { flex: 1; min-width: 80px; padding: 10px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-decoration: none; text-align: center; }
         .timer { color: #4caf50; font-family: monospace; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
@@ -73,8 +68,8 @@
         <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
         
         <div class="contact-grid">
-            <a href="https://wa.me/201097281524" class="btn-wa">واتساب</a>
-            <a href="tel:+201097281524" class="btn-call">اتصال</a>
+            <a href="https://wa.me/201097281524" class="btn-wa-main">واتساب</a>
+            <a href="tel:+201097281524" class="btn-call-main">اتصال</a>
         </div>
     </div>
 
@@ -142,12 +137,11 @@
             document.getElementById('booking-ui').style.pointerEvents = isOpen ? "all" : "none";
         }
 
-        // تحويل وقت الـ Input إلى AM/PM
         function formatTime(timeStr) {
             if(!timeStr) return null;
             let [h, m] = timeStr.split(':');
             h = parseInt(h);
-            let suffix = h >= 12 ? "PM" : "AM";
+            let suffix = h >= 12 ? "م" : "ص";
             h = h % 12 || 12;
             return `${h}:${m} ${suffix}`;
         }
@@ -156,28 +150,13 @@
             const n = document.getElementById('n').value, 
                   p = document.getElementById('p').value, 
                   rawTime = document.getElementById('t_picker').value;
-            
             const t = formatTime(rawTime);
-
-            if(!n || !p || !t) return alert("اكمل البيانات وافتح خانة الوقت");
-            
+            if(!n || !p || !t) return alert("اكمل البيانات");
             db.ref('b').push({ n, p, t, active: false, ts: 0 });
             fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
             alert("تم الحجز بنجاح ✅");
             document.getElementById('n').value = ""; document.getElementById('p').value = "";
             document.getElementById('t_picker').value = "";
-        }
-
-        function refreshAdminUI() {
-            const l = document.getElementById('settings-list'); l.innerHTML = "";
-            for(let i=0; i<7; i++) {
-                l.innerHTML += `<div class="admin-row"><span>${dayNames[i]}</span><div>فت: <input type="number" id="o-${i}" value="${currentSched[i].o}"> قف: <input type="number" id="c-${i}" value="${currentSched[i].c}"></div></div>`;
-            }
-        }
-
-        function saveSched() {
-            let ns = {}; for(let i=0; i<7; i++) { ns[i] = { o: parseInt(document.getElementById(`o-${i}`).value), c: parseInt(document.getElementById(`c-${i}`).value) }; }
-            db.ref('settings/sched').set(ns); alert("تم الحفظ!");
         }
 
         db.ref('b').on('value', snap => updateList(snap));
@@ -194,8 +173,9 @@
                     </div>
                     ${isAdmin ? `
                     <div class="admin-controls">
+                        <a href="tel:${d.p}" class="btn-s" style="background:#0288d1;">اتصال 📞</a>
                         <button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء التايمر</button>
-                        <button class="btn-s" style="background:#c62828;" onclick="del('${k}')">حذف الحجز</button>
+                        <button class="btn-s" style="background:#c62828;" onclick="del('${k}')">حذف</button>
                     </div>` : ''}
                 </div>`;
             });
@@ -219,6 +199,18 @@
                 });
             });
         }, 1000);
+
+        function refreshAdminUI() {
+            const l = document.getElementById('settings-list'); l.innerHTML = "";
+            for(let i=0; i<7; i++) {
+                l.innerHTML += `<div class="admin-row"><span>${dayNames[i]}</span><div>فت: <input type="number" id="o-${i}" value="${currentSched[i].o}"> قف: <input type="number" id="c-${i}" value="${currentSched[i].c}"></div></div>`;
+            }
+        }
+
+        function saveSched() {
+            let ns = {}; for(let i=0; i<7; i++) { ns[i] = { o: parseInt(document.getElementById(`o-${i}`).value), c: parseInt(document.getElementById(`c-${i}`).value) }; }
+            db.ref('settings/sched').set(ns); alert("تم الحفظ!");
+        }
     </script>
 </body>
 </html>
