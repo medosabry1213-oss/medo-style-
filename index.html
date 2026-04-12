@@ -10,36 +10,29 @@
         :root { --bg: #000; --card: #121212; --primary: #ff6d00; --text: #fff; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         #admin-trigger { color: var(--primary); font-size: 2.5rem; cursor: pointer; user-select: none; margin: 20px 0; font-weight: bold; }
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 15px; }
         .day { background: var(--card); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #222; font-size: 0.85rem; }
         .day.active { border: 2px solid var(--primary); background: #1a1a1a; }
         .day b { color: var(--primary); display: block; margin-bottom: 4px; }
-
         .status-bar { padding: 10px 25px; border-radius: 25px; margin-bottom: 20px; font-weight: bold; font-size: 1rem; }
         .open { background: #1b5e20; color: #4caf50; border: 1px solid #4caf50; }
         .closed { background: #b71c1c; color: #ff5252; border: 1px solid #ff5252; }
-
         .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; }
         input { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; box-sizing: border-box; }
         input[type="time"] { color-scheme: dark; font-family: monospace; font-weight: bold; }
-
         .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        
         .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .btn-call-main { background: #0288d1; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
         .btn-wa-main { background: #25d366; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
-
         #admin-panel { display: none; background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 2px dashed var(--primary); box-sizing: border-box; }
         .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #222; padding: 8px; border-radius: 8px; }
         .admin-row input { width: 50px; margin: 0 5px; padding: 5px; background: #333; color: white; border: none; text-align: center; }
-
         .list { width: 100%; max-width: 400px; margin-top: 25px; }
         .row { background: #0f0f0f; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 5px solid var(--primary); }
         .row-top { display: flex; justify-content: space-between; align-items: center; }
         .admin-controls { display: flex; gap: 8px; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; flex-wrap: wrap; }
         .btn-s { flex: 1; min-width: 80px; padding: 10px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-decoration: none; text-align: center; }
-        .btn-alert { background: #ffd600 !important; color: #000 !important; } /* زرار التنبيه */
+        .btn-alert { background: #ffd600 !important; color: #000 !important; }
         .timer { color: #4caf50; font-family: monospace; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
@@ -53,8 +46,11 @@
         <div id="settings-list"></div>
         <button class="btn" style="background:#2e7d32;" onclick="saveSched()">حفظ المواعيد 💾</button>
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn" style="flex:1; background:#1b5e20;" onclick="db.ref('settings/manualClose').set(false)">فتح إجباري</button>
-            <button class="btn" style="flex:1; background:#b71c1c;" onclick="db.ref('settings/manualClose').set(true)">قفل إجباري</button>
+            <button class="btn" style="flex:1; background:#0288d1; font-size: 0.8rem;" onclick="setManual('auto')">🔄 تشغيل حسب الجدول</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn" style="flex:1; background:#1b5e20;" onclick="setManual('open')">🔓 فتح إجباري</button>
+            <button class="btn" style="flex:1; background:#b71c1c;" onclick="setManual('close')">🔒 قفل إجباري</button>
         </div>
     </div>
 
@@ -67,7 +63,6 @@
         <label style="display:block; margin-bottom:5px; font-size:0.8rem; color:var(--primary)">اختر ميعاد الحجز:</label>
         <input type="time" id="t_picker">
         <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
-        
         <div class="contact-grid">
             <a href="https://wa.me/201097281524" class="btn-wa-main">واتساب</a>
             <a href="tel:+201097281524" class="btn-call-main">اتصال</a>
@@ -90,7 +85,7 @@
         firebase.initializeApp(conf);
         const db = firebase.database();
 
-        let isAdmin = false, currentSched = {}, manualClose = false, isFirstLoad = true;
+        let isAdmin = false, currentSched = {}, manualClose = "auto", isFirstLoad = true;
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
         let holdTimer;
@@ -110,22 +105,50 @@
 
         db.ref('settings').on('value', snap => {
             const data = snap.val();
-            if(data) { currentSched = data.sched; manualClose = data.manualClose; updateAppUI(); }
+            if(data) { 
+                currentSched = data.sched; 
+                manualClose = data.manualClose || "auto"; 
+                updateAppUI(); 
+            }
         });
 
         function updateAppUI() {
             const now = new Date(), d = now.getDay(), hr = now.getHours();
             const today = currentSched[d];
             if(!today) return;
+            
             const grid = document.getElementById('mainGrid'); grid.innerHTML = "";
             [5,6,0,1,2,3,4].forEach(i => {
                 const s = currentSched[i];
                 let txt = s.o==0 ? 'إجازة' : (s.o%12||12)+(s.o>=12?'م':'ص')+' : '+(s.c%12||12)+(s.c>=12?'م':'ص');
                 grid.innerHTML += `<div class="day ${i==d?'active':''}"><b>${dayNames[i]}</b>${txt}</div>`;
             });
+
+            let isOpen = false;
+            if (manualClose === "open") {
+                isOpen = true;
+            } else if (manualClose === "close") {
+                isOpen = false;
+            } else {
+                // منطق الجدول الذكي (يدعم العمل لبعد منتصف الليل)
+                if (today.o === 0) {
+                    isOpen = false;
+                } else if (today.c > today.o) {
+                    isOpen = (hr >= today.o && hr < today.c);
+                } else {
+                    // لو المحل بيقفل تاني يوم (مثلاً من 10ص لـ 2ص)
+                    isOpen = (hr >= today.o || hr < today.c);
+                }
+            }
+
             const box = document.getElementById('status-box');
-            box.innerHTML = !manualClose ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
-            box.className = 'status-bar ' + (!manualClose ? 'open' : 'closed');
+            box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
+            box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
+        }
+
+        function setManual(status) {
+            db.ref('settings/manualClose').set(status);
+            alert(status === 'auto' ? "تم التفعيل حسب الجدول" : "تم التغيير يدوياً");
         }
 
         function formatTime(timeStr) {
@@ -136,7 +159,6 @@
             return `${hr % 12 || 12}:${m} ${suffix}`;
         }
 
-        // دالة لحساب هل ميعاد الزبون قرب (باقي 15 دقيقة أو أقل)
         function isTimeNear(targetTime) {
             if(!targetTime) return false;
             const now = new Date();
@@ -145,12 +167,10 @@
             let targetHr = parseInt(h);
             if(suffix === "م" && targetHr !== 12) targetHr += 12;
             if(suffix === "ص" && targetHr === 12) targetHr = 0;
-            
             const targetDate = new Date();
             targetDate.setHours(targetHr, parseInt(m), 0);
-            
-            const diff = (targetDate - now) / 1000 / 60; // الفرق بالدقائق
-            return diff > 0 && diff <= 15; // لو فاضل من 0 لـ 15 دقيقة
+            const diff = (targetDate - now) / 1000 / 60;
+            return diff > 0 && diff <= 15;
         }
 
         function h() {
@@ -175,8 +195,7 @@
             const q = document.getElementById('q'); q.innerHTML = "";
             snap.forEach(c => {
                 const d = c.val(), k = c.key;
-                const near = isTimeNear(d.t); // فحص الوقت
-                
+                const near = isTimeNear(d.t);
                 q.innerHTML += `
                 <div class="row">
                     <div class="row-top">
@@ -186,8 +205,8 @@
                     ${isAdmin ? `
                     <div class="admin-controls">
                         <a href="tel:${d.p}" class="btn-s" style="background:#0288d1;">اتصال 📞</a>
-                        ${near ? `<button class="btn-s btn-alert" onclick="sendReminder('${d.p}', '${d.n}')">تنبيه بالدور 🔔</button>` : ''}
-                        <button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء التايمر</button>
+                        ${near ? `<button class="btn-s btn-alert" onclick="sendReminder('${d.p}', '${d.n}')">تنبيه 🔔</button>` : ''}
+                        <button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء</button>
                         <button class="btn-s" style="background:#c62828;" onclick="del('${k}')">حذف</button>
                     </div>` : ''}
                 </div>`;
@@ -231,3 +250,4 @@
     </script>
 </body>
 </html>
+
