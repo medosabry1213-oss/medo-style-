@@ -76,11 +76,13 @@
         const TG_ID = "7155097464"; 
 
         const conf = {
-            apiKey: "AIzaSyAZTbw_9GzgcKcCO3wUdv4Rhy869I3G4XE",
-            authDomain: "medostyle-21e06.firebaseapp.com",
-            databaseURL: "https://medostyle-21e06-default-rtdb.firebaseio.com",
-            projectId: "medostyle-21e06",
-            appId: "1:999137802961:web:826621189189a7eb3823f0"
+            apiKey: "AIzaSyBDmtLv74ewm-AD-h2kLBy2TorN0u-gov4",
+            authDomain: "medostyle-98c7a.firebaseapp.com",
+            databaseURL: "https://medostyle-98c7a-default-rtdb.firebaseio.com",
+            projectId: "medostyle-98c7a",
+            storageBucket: "medostyle-98c7a.firebasestorage.app",
+            messagingSenderId: "392964443856",
+            appId: "1:392964443856:web:b11a20dd1c778301b718d5"
         };
         firebase.initializeApp(conf);
         const db = firebase.database();
@@ -124,39 +126,19 @@
                 grid.innerHTML += `<div class="day ${i==d?'active':''}"><b>${dayNames[i]}</b>${txt}</div>`;
             });
 
-            let isOpen = false;
-            if (manualClose === "open") {
-                isOpen = true;
-            } else if (manualClose === "close") {
-                isOpen = false;
-            } else {
-                // منطق الجدول الذكي (يدعم العمل لبعد منتصف الليل)
-                if (today.o === 0) {
-                    isOpen = false;
-                } else if (today.c > today.o) {
-                    isOpen = (hr >= today.o && hr < today.c);
-                } else {
-                    // لو المحل بيقفل تاني يوم (مثلاً من 10ص لـ 2ص)
-                    isOpen = (hr >= today.o || hr < today.c);
-                }
-            }
-
+            let isOpen = (manualClose === "open") ? true : (manualClose === "close" ? false : (today.o === 0 ? false : (today.c > today.o ? (hr >= today.o && hr < today.c) : (hr >= today.o || hr < today.c))));
             const box = document.getElementById('status-box');
             box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
             box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
         }
 
-        function setManual(status) {
-            db.ref('settings/manualClose').set(status);
-            alert(status === 'auto' ? "تم التفعيل حسب الجدول" : "تم التغيير يدوياً");
-        }
+        function setManual(status) { db.ref('settings/manualClose').set(status); alert("تم التحديث"); }
 
         function formatTime(timeStr) {
             if(!timeStr) return null;
             let [h, m] = timeStr.split(':');
             let hr = parseInt(h);
-            let suffix = hr >= 12 ? "م" : "ص";
-            return `${hr % 12 || 12}:${m} ${suffix}`;
+            return `${hr % 12 || 12}:${m} ${hr >= 12 ? "م" : "ص"}`;
         }
 
         function isTimeNear(targetTime) {
@@ -174,12 +156,10 @@
         }
 
         function h() {
-            const n = document.getElementById('n').value, 
-                  p = document.getElementById('p').value, 
-                  rawTime = document.getElementById('t_picker').value;
-            const t = formatTime(rawTime);
+            const n = document.getElementById('n').value, p = document.getElementById('p').value, raw = document.getElementById('t_picker').value;
+            const t = formatTime(raw);
             if(!n || !p || !t) return alert("اكمل البيانات");
-            db.ref('b').push({ n, p, t, active: false, ts: 0 });
+            db.ref('b').push({ n, p, t, raw, active: false, ts: 0 });
             fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
             alert("تم الحجز بنجاح ✅");
             document.getElementById('n').value = ""; document.getElementById('p').value = "";
@@ -193,21 +173,26 @@
 
         function updateList(snap) {
             const q = document.getElementById('q'); q.innerHTML = "";
-            snap.forEach(c => {
-                const d = c.val(), k = c.key;
+            let bookings = [];
+            snap.forEach(c => { bookings.push({ k: c.key, ...c.val() }); });
+            
+            // ترتيب الحجوزات حسب الوقت (raw time)
+            bookings.sort((a, b) => (a.raw > b.raw ? 1 : -1));
+
+            bookings.forEach(d => {
                 const near = isTimeNear(d.t);
                 q.innerHTML += `
                 <div class="row">
                     <div class="row-top">
                         <div><b>${d.n}</b><br><small>${d.t}</small></div>
-                        <div class="timer" id="tm-${k}">${d.active ? '..' : 'منتظر'}</div>
+                        <div class="timer" id="tm-${d.k}">${d.active ? '..' : 'منتظر'}</div>
                     </div>
                     ${isAdmin ? `
                     <div class="admin-controls">
-                        <a href="tel:${d.p}" class="btn-s" style="background:#0288d1;">اتصال 📞</a>
+                        <a href="tel:${d.p}" class="btn-s" style="background:#0288d1;">اتصال</a>
                         ${near ? `<button class="btn-s btn-alert" onclick="sendReminder('${d.p}', '${d.n}')">تنبيه 🔔</button>` : ''}
-                        <button class="btn-s" style="background:#2e7d32;" onclick="run('${k}')">بدء</button>
-                        <button class="btn-s" style="background:#c62828;" onclick="del('${k}')">حذف</button>
+                        <button class="btn-s" style="background:#2e7d32;" onclick="run('${d.k}')">بدء</button>
+                        <button class="btn-s" style="background:#c62828;" onclick="del('${d.k}')">حذف</button>
                     </div>` : ''}
                 </div>`;
             });
@@ -222,9 +207,15 @@
         function del(id) { if(confirm("أكيد عاوز تحذف؟")) db.ref('b/'+id).remove(); }
 
         setInterval(() => {
+            const now = new Date();
+            const currentRawTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+            
             db.ref('b').once('value', snap => {
                 snap.forEach(c => {
                     const d = c.val();
+                    // تشغيل التايمر تلقائياً لو الموعد جاء ولم يتم حذفه
+                    if(!d.active && d.raw <= currentRawTime) { run(c.key); }
+                    
                     if(d.active) {
                         const rem = 3600 - Math.floor((Date.now() - d.ts)/1000);
                         if(rem <= 0) db.ref('b/'+c.key).remove();
@@ -250,4 +241,3 @@
     </script>
 </body>
 </html>
-
