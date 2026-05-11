@@ -3,73 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✬ 🦅𝒔𝒐𝒌𝒂𝒓🦅 ✬ Pro</title>
+    <title>✬ 🦅𝒔𝒐𝒌𝒂𝒓🦅 ✬</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg: #000; --card: #121212; --primary: #ff6d00; --text: #fff; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        :root { --bg: #000; --card: #121212; --primary: #ff6d00; --text: #fff; --accent: #4caf50; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Header */
         #admin-trigger { color: var(--primary); font-size: 2.5rem; cursor: pointer; user-select: none; margin: 20px 0; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 15px; }
+        
+        /* Tabs Navigation */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #111; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; z-index: 1000; }
+        .nav-item { color: #666; text-align: center; flex: 1; cursor: pointer; font-size: 0.85rem; }
+        .nav-item i { display: block; font-size: 1.3rem; margin-bottom: 3px; }
+        .nav-item.active { color: var(--primary); }
+
+        /* Tabs Content */
+        .tab-content { display: none; width: 100%; max-width: 400px; padding: 10px; box-sizing: border-box; }
+        .tab-content.active { display: block; }
+
+        /* Elements */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-bottom: 15px; }
         .day { background: var(--card); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #222; font-size: 0.85rem; }
         .day.active { border: 2px solid var(--primary); background: #1a1a1a; }
         .day b { color: var(--primary); display: block; margin-bottom: 4px; }
-        .status-bar { padding: 10px 25px; border-radius: 25px; margin-bottom: 20px; font-weight: bold; font-size: 1rem; }
+        
+        .status-bar { width: 100%; padding: 10px 0; border-radius: 25px; margin-bottom: 20px; font-weight: bold; text-align: center; }
         .open { background: #1b5e20; color: #4caf50; border: 1px solid #4caf50; }
         .closed { background: #b71c1c; color: #ff5252; border: 1px solid #ff5252; }
-        .booking-card { background: var(--card); width: 100%; max-width: 400px; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; }
-        input { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; box-sizing: border-box; }
-        input[type="time"] { color-scheme: dark; font-family: monospace; font-weight: bold; }
-        .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn-call-main { background: #0288d1; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
-        .btn-wa-main { background: #25d366; padding: 12px; border-radius: 10px; text-decoration: none; color: white; text-align: center; font-weight: bold; font-size: 0.9rem; }
-        #admin-panel { display: none; background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 2px dashed var(--primary); box-sizing: border-box; }
-        .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #222; padding: 8px; border-radius: 8px; }
-        .admin-row input { width: 50px; margin: 0 5px; padding: 5px; background: #333; color: white; border: none; text-align: center; }
-        .list { width: 100%; max-width: 400px; margin-top: 25px; }
+
+        .booking-card, .card { background: var(--card); width: 100%; border-radius: 20px; padding: 20px; border: 1px solid #222; box-sizing: border-box; margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #181818; color: #fff; text-align: center; font-size: 1rem; outline: none; box-sizing: border-box; }
+        .btn { background: var(--primary); color: #fff; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-bottom: 5px; }
+        
         .row { background: #0f0f0f; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-right: 5px solid var(--primary); }
         .row-top { display: flex; justify-content: space-between; align-items: center; }
-        .admin-controls { display: flex; gap: 8px; margin-top: 10px; border-top: 1px solid #222; padding-top: 10px; flex-wrap: wrap; }
-        .btn-s { flex: 1; min-width: 80px; padding: 10px; border-radius: 8px; border: none; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-decoration: none; text-align: center; }
-        .btn-alert { background: #ffd600 !important; color: #000 !important; }
         .timer { color: #4caf50; font-family: monospace; font-weight: bold; font-size: 1.2rem; }
+
+        #admin-panel { display: none; background: #1a1a1a; width: 100%; border-radius: 15px; padding: 15px; margin-bottom: 20px; border: 2px dashed var(--primary); box-sizing: border-box; }
+        .admin-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #222; padding: 8px; border-radius: 8px; }
+        .admin-row input { width: 50px; margin: 0 5px; padding: 5px; background: #333; color: white; border: none; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h1 id="admin-trigger">✬ 🦅𝒔𝒐𝒌𝒂𝒓🦅 ✬</h1>
+    <h1 id="admin-trigger" onclick="openAdmin()">✬ 🦅𝒔𝒐𝒌𝒂𝒓🦅 ✬</h1>
+    
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+    <audio id="start-sound" src="https://assets.mixkit.co/active_storage/sfx/1070/1070-preview.mp3" preload="auto"></audio>
+    <audio id="end-sound" src="https://assets.mixkit.co/active_storage/sfx/221/221-preview.mp3" preload="auto"></audio>
 
     <div id="admin-panel">
         <h3 style="text-align:center; color:var(--primary); margin:0 0 15px 0;">⚙️ إعدادات المحل</h3>
         <div id="settings-list"></div>
         <button class="btn" style="background:#2e7d32;" onclick="saveSched()">حفظ المواعيد 💾</button>
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn" style="flex:1; background:#0288d1; font-size: 0.8rem;" onclick="setManual('auto')">🔄 تشغيل حسب الجدول</button>
+            <button class="btn" style="flex:1; background:#0288d1; font-size: 0.8rem;" onclick="setManual('auto')">🔄 حسب الجدول</button>
         </div>
         <div style="display:flex; gap:10px; margin-top:10px;">
             <button class="btn" style="flex:1; background:#1b5e20;" onclick="setManual('open')">🔓 فتح إجباري</button>
             <button class="btn" style="flex:1; background:#b71c1c;" onclick="setManual('close')">🔒 قفل إجباري</button>
         </div>
+        <hr style="border-color:#333; margin:20px 0;">
+        <input type="text" id="off-title" placeholder="عنوان العرض">
+        <textarea id="off-desc" placeholder="وصف العرض"></textarea>
+        <button class="btn" style="background:var(--primary);" onclick="addOffer()">إضافة عرض جديد 🎁</button>
     </div>
 
-    <div class="grid" id="mainGrid"></div>
-    <div id="status-box" class="status-bar">جاري التحميل...</div>
-
-    <div class="booking-card" id="booking-ui">
-        <input type="text" id="n" placeholder="اسمك الثنائي">
-        <input type="tel" id="p" placeholder="رقم الموبايل">
-        <label style="display:block; margin-bottom:5px; font-size:0.8rem; color:var(--primary)">اختر ميعاد الحجز:</label>
-        <input type="time" id="t_picker">
-        <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
-        <div class="contact-grid">
-            <a href="https://wa.me/201097281524" class="btn-wa-main">واتساب</a>
-            <a href="tel:+201097281524" class="btn-call-main">اتصال</a>
+    <div id="tab-booking" class="tab-content active">
+        <div class="grid" id="mainGrid"></div>
+        <div id="status-box" class="status-bar">جاري التحميل...</div>
+        <div class="booking-card">
+            <input type="text" id="n" placeholder="اسمك الثنائي">
+            <input type="tel" id="p" placeholder="رقم الموبايل">
+            <input type="time" id="t_picker">
+            <button class="btn" onclick="h()">تأكيد الحجز الآن ✅</button>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <a href="tel:+201097281524" class="btn" style="background:#0288d1; text-decoration:none; text-align:center; flex:1; padding:10px;">اتصال</a>
+                <a href="https://wa.me/201097281524" class="btn" style="background:#25d366; text-decoration:none; text-align:center; flex:1; padding:10px;">واتساب</a>
+            </div>
         </div>
     </div>
 
-    <div class="list" id="q"></div>
+    <div id="tab-waiting" class="tab-content">
+        <h3 style="text-align:center;">👥 المنتظرين</h3>
+        <div id="q-waiting"></div>
+    </div>
+
+    <div id="tab-current" class="tab-content">
+        <h3 style="text-align:center;">⌛ الحالات الحالية</h3>
+        <div id="q-current"></div>
+    </div>
+
+    <div id="tab-offers" class="tab-content">
+        <h3 style="text-align:center;">🎁 عروض ✬ 🦅𝒔𝒐𝒌𝒂𝒓🦅 ✬</h3>
+        <div id="offers-list"></div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showTab('tab-booking', this)"><i class="fa-solid fa-house"></i>الرئيسية</div>
+        <div class="nav-item" onclick="showTab('tab-waiting', this)"><i class="fa-solid fa-users-line"></i>الانتظار</div>
+        <div class="nav-item" onclick="showTab('tab-current', this)"><i class="fa-solid fa-stopwatch"></i>الحالي</div>
+        <div class="nav-item" onclick="showTab('tab-offers', this)"><i class="fa-solid fa-gift"></i>العروض</div>
+    </div>
 
     <script>
         const TG_TOKEN = "8646413068:AAEyHPyZexE8hfSZu7pW7xXQG_BGTemnHPs"; 
@@ -87,146 +125,144 @@
         firebase.initializeApp(conf);
         const db = firebase.database();
 
-        let isAdmin = false, currentSched = {}, manualClose = "auto", isFirstLoad = true;
+        let isAdmin = false, currentSched = {}, manualClose = "auto", isFirstLoad = true, currentBookings = [];
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-        let holdTimer;
-        const trigger = document.getElementById('admin-trigger');
-        ['mousedown', 'touchstart'].forEach(e => trigger.addEventListener(e, () => {
-            holdTimer = setTimeout(() => {
-                let p = prompt("كلمة سر المدير:");
-                if(p === "132901") { 
-                    isAdmin = true; 
-                    document.getElementById('admin-panel').style.display = 'block';
-                    refreshAdminUI();
-                    db.ref('b').get().then(s => updateList(s));
-                }
-            }, 3000);
-        }));
-        ['mouseup', 'touchend', 'mouseleave'].forEach(e => trigger.addEventListener(e, () => clearTimeout(holdTimer)));
+        function showTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function openAdmin() {
+            if(prompt("كلمة سر المدير:") === "132901") {
+                isAdmin = true;
+                document.getElementById('admin-panel').style.display = 'block';
+                refreshAdminUI();
+                renderLists();
+            }
+        }
 
         db.ref('settings').on('value', snap => {
             const data = snap.val();
-            if(data) { 
-                currentSched = data.sched; 
-                manualClose = data.manualClose || "auto"; 
-                updateAppUI(); 
-            }
+            if(data) { currentSched = data.sched; manualClose = data.manualClose || "auto"; updateAppUI(); }
         });
 
-        function updateAppUI() {
-            const now = new Date(), d = now.getDay(), hr = now.getHours();
-            const today = currentSched[d];
-            if(!today) return;
-            
-            const grid = document.getElementById('mainGrid'); grid.innerHTML = "";
-            [5,6,0,1,2,3,4].forEach(i => {
-                const s = currentSched[i];
-                let txt = s.o==0 ? 'إجازة' : (s.o%12||12)+(s.o>=12?'م':'ص')+' : '+(s.c%12||12)+(s.c>=12?'م':'ص');
-                grid.innerHTML += `<div class="day ${i==d?'active':''}"><b>${dayNames[i]}</b>${txt}</div>`;
+        db.ref('b').on('value', snap => {
+            currentBookings = [];
+            snap.forEach(c => { currentBookings.push({ k: c.key, ...c.val() }); });
+            currentBookings.sort((a, b) => (a.raw > b.raw ? 1 : -1));
+            renderLists();
+            if(!isFirstLoad) playSnd('notif-sound', 1000);
+            isFirstLoad = false;
+        });
+
+        db.ref('offers').on('value', snap => {
+            const list = document.getElementById('offers-list'); list.innerHTML = "";
+            snap.forEach(o => {
+                list.innerHTML += `<div class="card">
+                    <b style="color:var(--primary)">${o.val().title}</b><p>${o.val().desc}</p>
+                 ${isAdmin ? `<button class="btn" style="background:#b71c1c; padding:8px;" onclick="db.ref('offers/${o.key}').remove()">حذف العرض</button>` : ''}
+
+                </div>`;
             });
+        });
 
-            let isOpen = (manualClose === "open") ? true : (manualClose === "close" ? false : (today.o === 0 ? false : (today.c > today.o ? (hr >= today.o && hr < today.c) : (hr >= today.o || hr < today.c))));
-            const box = document.getElementById('status-box');
-            box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴';
-            box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
-        }
-
-        function setManual(status) { db.ref('settings/manualClose').set(status); alert("تم التحديث"); }
-
-        function formatTime(timeStr) {
-            if(!timeStr) return null;
-            let [h, m] = timeStr.split(':');
-            let hr = parseInt(h);
-            return `${hr % 12 || 12}:${m} ${hr >= 12 ? "م" : "ص"}`;
-        }
-
-        function isTimeNear(targetTime) {
-            if(!targetTime) return false;
-            const now = new Date();
-            let [time, suffix] = targetTime.split(' ');
-            let [h, m] = time.split(':');
-            let targetHr = parseInt(h);
-            if(suffix === "م" && targetHr !== 12) targetHr += 12;
-            if(suffix === "ص" && targetHr === 12) targetHr = 0;
-            const targetDate = new Date();
-            targetDate.setHours(targetHr, parseInt(m), 0);
-            const diff = (targetDate - now) / 1000 / 60;
-            return diff > 0 && diff <= 15;
+        function renderLists() {
+            const wait = document.getElementById('q-waiting'); const curr = document.getElementById('q-current');
+            wait.innerHTML = ""; curr.innerHTML = "";
+            currentBookings.forEach((d, i) => {
+                let html = `
+                <div class="row">
+                    <div class="row-top">
+                        <div><b>${i+1}. ${d.n}</b><br><small>${d.t}</small></div>
+                        <div class="timer" id="tm-${d.k}">${d.active ? '..' : 'منتظر'}</div>
+                    </div>
+                    ${isAdmin ? `
+                    <div style="margin-top:10px; display:flex; gap:5px;">
+                        <button class="btn" style="padding:8px; font-size:0.8rem; background:#2e7d32;" onclick="startTimer('${d.k}')">بدء</button>
+                        <button class="btn" style="padding:8px; font-size:0.8rem; background:#c62828;" onclick="del('${d.k}')">حذف</button>
+                        <a href="tel:${d.p}" class="btn" style="padding:8px; font-size:0.8rem; background:#0288d1; text-decoration:none; text-align:center;">اتصال</a>
+                    </div>` : ''}
+                </div>`;
+                if(d.active) curr.innerHTML += html; else wait.innerHTML += html;
+            });
         }
 
         function h() {
             const n = document.getElementById('n').value, p = document.getElementById('p').value, raw = document.getElementById('t_picker').value;
-            const t = formatTime(raw);
-            if(!n || !p || !t) return alert("اكمل البيانات");
-            db.ref('b').push({ n, p, t, raw, active: false, ts: 0 });
-            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+t)}`);
-            alert("تم الحجز بنجاح ✅");
-            document.getElementById('n').value = ""; document.getElementById('p').value = "";
+            if(!n || !p || !raw) return alert("اكمل البيانات");
+            if(currentBookings.some(b => b.raw === raw)) return alert("الموعد محجوز!");
+            db.ref('b').push({ n, p, raw, t: formatTime(raw), active: false, ts: 0, dur: 60 });
+            fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage?chat_id=${TG_ID}&text=${encodeURIComponent("💈 حجز جديد!\nالزبون: "+n+"\nالموعد: "+formatTime(raw))}`);
+            alert("تم الحجز ✅");
         }
 
-        db.ref('b').on('value', snap => {
-            updateList(snap);
-            if(!isFirstLoad && isAdmin) document.getElementById('notif-sound').play().catch(()=>{});
-            isFirstLoad = false;
-        });
+        function formatTime(r) { let [h, m] = r.split(':'); let hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? "م" : "ص"}`; }
 
-        function updateList(snap) {
-            const q = document.getElementById('q'); q.innerHTML = "";
-            let bookings = [];
-            snap.forEach(c => { bookings.push({ k: c.key, ...c.val() }); });
-            
-            // ترتيب الحجوزات حسب الوقت (raw time)
-            bookings.sort((a, b) => (a.raw > b.raw ? 1 : -1));
-
-            bookings.forEach(d => {
-                const near = isTimeNear(d.t);
-                q.innerHTML += `
-                <div class="row">
-                    <div class="row-top">
-                        <div><b>${d.n}</b><br><small>${d.t}</small></div>
-                        <div class="timer" id="tm-${d.k}">${d.active ? '..' : 'منتظر'}</div>
-                    </div>
-                    ${isAdmin ? `
-                    <div class="admin-controls">
-                        <a href="tel:${d.p}" class="btn-s" style="background:#0288d1;">اتصال</a>
-                        ${near ? `<button class="btn-s btn-alert" onclick="sendReminder('${d.p}', '${d.n}')">تنبيه 🔔</button>` : ''}
-                        <button class="btn-s" style="background:#2e7d32;" onclick="run('${d.k}')">بدء</button>
-                        <button class="btn-s" style="background:#c62828;" onclick="del('${d.k}')">حذف</button>
-                    </div>` : ''}
-                </div>`;
-            });
+        function playSnd(id, time) {
+            let s = document.getElementById(id); s.play().catch(()=>{});
+            setTimeout(() => { s.pause(); s.currentTime = 0; }, time);
         }
 
-        function sendReminder(phone, name) {
-            const msg = `يا ${name}، ميعادك قرب في ميدو ستايل.. اجهز عشان دورك فاضل عليه 15 دقيقه! 💈`;
-            window.open(`https://wa.me/20${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        function startTimer(id) {
+            let m = prompt("ادخل مده الحجز بالدقائق:", "60");
+            if(m) {
+                db.ref('b/'+id).update({ active: true, ts: Date.now(), dur: parseInt(m) });
+                playSnd('start-sound', 1000);
+            }
         }
 
-        function run(id) { db.ref('b/'+id).update({ active: true, ts: Date.now() }); }
-        function del(id) { if(confirm("أكيد عاوز تحذف؟")) db.ref('b/'+id).remove(); }
+        function del(id) { if(confirm("حذف الحجز؟")) db.ref('b/'+id).remove(); }
+        function setManual(status) { db.ref('settings/manualClose').set(status); alert("تم التحديث"); }
+        function addOffer() {
+            const t = document.getElementById('off-title').value, d = document.getElementById('off-desc').value;
+            if(t) { db.ref('offers').push({ title: t, desc: d }); alert("تمت الإضافة"); }
+        }
 
         setInterval(() => {
             const now = new Date();
-            const currentRawTime = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-            
-            db.ref('b').once('value', snap => {
-                snap.forEach(c => {
-                    const d = c.val();
-                    // تشغيل التايمر تلقائياً لو الموعد جاء ولم يتم حذفه
-                    if(!d.active && d.raw <= currentRawTime) { run(c.key); }
-                    
-                    if(d.active) {
-                        const rem = 3600 - Math.floor((Date.now() - d.ts)/1000);
-                        if(rem <= 0) db.ref('b/'+c.key).remove();
-                        else {
-                            const el = document.getElementById('tm-'+c.key);
-                            if(el) el.innerText = Math.floor(rem/60) + ":" + (rem%60).toString().padStart(2,'0');
-                        }
+            const cr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            currentBookings.forEach(d => {
+                if(!d.active && d.raw === cr) {
+                    db.ref('b/'+d.k).update({ active: true, ts: Date.now(), dur: 60 });
+                    playSnd('start-sound', 1000);
+                }
+                if(d.active) {
+                    const rem = (d.dur*60) - Math.floor((Date.now() - d.ts)/1000);
+                    if(rem <= 0) { playSnd('end-sound', 2000); db.ref('b/'+d.k).remove(); }
+                    else {
+                        const el = document.getElementById('tm-'+d.k);
+                        if(el) el.innerText = Math.floor(rem/60) + ":" + (rem%60).toString().padStart(2,'0');
                     }
-                });
+                }
             });
         }, 1000);
+
+ function updateAppUI() {
+    const now = new Date(), d = now.getDay(), hr = now.getHours();
+    const grid = document.getElementById('mainGrid'); 
+    grid.innerHTML = "";
+    
+    [5,6,0,1,2,3,4].forEach(i => { 
+        const s = currentSched[i];
+        // التعديل هنا عشان يظهر "12 مساءً" بدل "12"
+        let openTime = s.o == 0 ? '' : (s.o % 12 || 12) + (s.o >= 12 ? ' م' : ' ص');
+        let closeTime = s.o == 0 ? '' : (s.c % 12 || 12) + (s.c >= 12 ? ' م' : ' ص');
+        
+        grid.innerHTML += `
+            <div class="day ${i==d?'active':''}">
+                <b>${dayNames[i]}</b>
+                ${s.o==0 ? 'إجازة' : openTime + ' - ' + closeTime}
+            </div>`; 
+    });
+
+    let isOpen = (manualClose === "open") ? true : (manualClose === "close" ? false : (currentSched[d].o === 0 ? false : (hr >= currentSched[d].o && hr < currentSched[d].c)));
+    const box = document.getElementById('status-box'); 
+    box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴'; 
+    box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
+}
 
         function refreshAdminUI() {
             const l = document.getElementById('settings-list'); l.innerHTML = "";
@@ -238,6 +274,34 @@
             let ns = {}; for(let i=0; i<7; i++) { ns[i] = { o: parseInt(document.getElementById(`o-${i}`).value), c: parseInt(document.getElementById(`c-${i}`).value) }; }
             db.ref('settings/sched').set(ns); alert("تم الحفظ!");
         }
-    </script>
+    let holdTimer;
+const trigger = document.getElementById('admin-trigger');
+
+const startHold = () => {
+    holdTimer = setTimeout(() => {
+        if (prompt("كلمة سر المدير:") === "132901") {
+            isAdmin = true;
+            // السطرين دول هم اللي هيرجعوا اللوحة وجدول المواعيد للظهور
+            document.getElementById('admin-panel').style.display = 'block';
+            
+            // استدعاء الوظائف اللي بتعرض المواعيد والطلبات عشان تظهر فوراً
+            if (typeof refreshAdminUI === "function") refreshAdminUI();
+            if (typeof renderLists === "function") renderLists();
+        }
+    }, 5000); // 5 ثواني
+};
+
+const stopHold = () => clearTimeout(holdTimer);
+
+trigger.addEventListener('mousedown', startHold);
+trigger.addEventListener('mouseup', stopHold);
+trigger.addEventListener('mouseleave', stopHold);
+
+trigger.addEventListener('touchstart', (e) => {
+    startHold();
+});
+trigger.addEventListener('touchend', stopHold);
+</script>
 </body>
 </html>
+
