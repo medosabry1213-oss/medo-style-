@@ -93,7 +93,7 @@
     </div>
 
     <div id="tab-current" class="tab-content">
-        <h3 style="text-align:center;">⌛  الزبائن الحاليه</h3>
+        <h3 style="text-align:center;">⌛ الحالات الحالية</h3>
         <div id="q-current"></div>
     </div>
 
@@ -258,7 +258,12 @@
             </div>`; 
     });
 
-    let isOpen = (manualClose === "open") ? true : (manualClose === "close" ? false : (currentSched[d].o === 0 ? false : (hr >= currentSched[d].o && hr < currentSched[d].c)));
+  let open = currentSched[d].o;
+let close = currentSched[d].c;
+// لو وقت القفل أصغر من الفتح (يعني قفلنا بعد نص الليل)
+let condition = close > open ? (hr >= open && hr < close) : (hr >= open || hr < close);
+
+let isOpen = (manualClose === "open") ? true : (manualClose === "close" ? false : (open === 0 ? false : condition));
     const box = document.getElementById('status-box'); 
     box.innerHTML = isOpen ? 'المحل مفتوح الآن 🟢' : 'المحل مغلق الآن 🔴'; 
     box.className = 'status-bar ' + (isOpen ? 'open' : 'closed');
@@ -304,4 +309,3 @@ trigger.addEventListener('touchend', stopHold);
 </script>
 </body>
 </html>
-
